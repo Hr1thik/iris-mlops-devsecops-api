@@ -61,12 +61,12 @@ pipeline {
 
         stage('Update GitOps Manifests') {
             steps {
-                echo "Updating k8s/deployment.yaml with image tag ${IMAGE_TAG}..."
+                echo "Updating k8s/deployment.yml with image tag ${IMAGE_TAG}..."
                 sh """
-                    sed -i "s|image: ${DOCKER_IMAGE_NAME}:.*|image: ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml
+                    sed -i "s|image: ${DOCKER_IMAGE_NAME}:.*|image: ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}|g" k8s/deployment.yml
                     git config user.name "jenkins-bot"
                     git config user.email "jenkins@devops.local"
-                    git add k8s/deployment.yaml
+                    git add k8s/deployment.yml
                     git commit -m "ci: update image tag to ${IMAGE_TAG} [skip ci]" || true
                     git push https://\${GITHUB_TOKEN}@github.com/Hr1thik/iris-mlops-devsecops-api.git HEAD:${GIT_BRANCH}
                 """

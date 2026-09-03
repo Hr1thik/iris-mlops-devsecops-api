@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: iris-api
-        image: hr1thik/iris-mlops-api:7
+        image: hr1thik/iris-mlops-api:8
         ports:
         - containerPort: 8000
         resources:

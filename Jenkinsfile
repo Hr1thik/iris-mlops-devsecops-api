@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        PATH              = "/var/jenkins_home/.local/bin:${env.PATH}"
         DOCKER_IMAGE_NAME = 'hr1thik/iris-mlops-api'
         IMAGE_TAG         = "${BUILD_NUMBER}"
         GIT_REPO_URL      = 'https://github.com/Hr1thik/iris-mlops-devsecops-api.git'
@@ -22,7 +23,7 @@ pipeline {
             steps {
                 echo "Running Static Application Security Testing (Bandit)..."
                 sh '''
-                    pip3 install bandit --break-system-packages || pip install bandit || true
+                    pip3 install --user bandit --break-system-packages || true
                     bandit -r app.py -f json -o bandit-report.json || true
                 '''
             }
@@ -32,7 +33,7 @@ pipeline {
             steps {
                 echo "Scanning requirements.txt for known vulnerabilities..."
                 sh '''
-                    pip3 install safety --break-system-packages || pip install safety || true
+                    pip3 install --user safety --break-system-packages || true
                     safety check -r requirements.txt || true
                 '''
             }

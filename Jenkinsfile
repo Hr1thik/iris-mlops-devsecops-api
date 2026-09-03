@@ -68,7 +68,7 @@ pipeline {
                     git config user.email "jenkins@devops.local"
                     git add k8s/deployment.yml
                     git commit -m "ci: update image tag to ${IMAGE_TAG} [skip ci]" || true
-                    git push https://\${GITHUB_TOKEN}@github.com/Hr1thik/iris-mlops-devsecops-api.git HEAD:${GIT_BRANCH}
+                    GIT_TERMINAL_PROMPT=0 git push https://x-access-token:\${GITHUB_TOKEN}@github.com/Hr1thik/iris-mlops-devsecops-api.git HEAD:\${GIT_BRANCH}
                 """
             }
         }

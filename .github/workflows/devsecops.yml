@@ -1,0 +1,78 @@
+name: DevSecOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  sast-sonarqube:
+    name: 1. SAST - SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  sca-dependency-scan:
+    name: 2. SCA - Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Scan requirements.txt with Safety
+        run: |
+          pip install --upgrade pip
+          pip install safety
+          safety check -r requirements.txt --continue-on-error
+
+  container-security-and-deploy:
+    name: 3. Container Scan (Trivy) & Push
+    needs: [sast-sonarqube, sca-dependency-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image Locally
+        run: |
+          docker build -t hr1thik/iris-mlops-api:${{ github.sha }} .
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: hr1thik/iris-mlops-api:${{ github.sha }}
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Publish Images to Docker Hub
+        run: |
+          docker tag hr1thik/iris-mlops-api:${{ github.sha }} hr1thik/iris-mlops-api:latest
+          docker tag hr1thik/iris-mlops-api:${{ github.sha }} hr1thik/iris-mlops-api:v1
+          docker push hr1thik/iris-mlops-api:latest
+          docker push hr1thik/iris-mlops-api:v1

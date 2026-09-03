@@ -1,0 +1,6 @@
+VM1/
+__pycache__/
+*.pyc
+mlruns/
+*.db
+.env
